@@ -119,14 +119,13 @@ This project involved significant debugging and iterative refinement:
 1.  **Setup Environment:**
     ```bash
     pip install tensorflow transformers datasets pandas scikit-learn
-    # Mount Google Drive if using Colab
     ```
 2.  **Run Preprocessing:**
     * Configure and run `preprocess_hf_generic.py` for each source dataset (`siddharthmb/...`, `Faith1712/...`, `cajcodes/...`).
     * Configure and run `preprocess_combine_datasets.py`.
 3.  **Run Training:**
     * Ensure `PROCESSED_DATA_DIR` in `train_model_final_combined.py` points to the combined data directory (`.../data/processed_combined`).
-    * Run `python train_model_final_combined.py`. *(Script ID: `train_model_final_combined`)*
+    * Run `python train_model.py`. *(Script ID: `train_model`)*
 4.  **Run Evaluation:**
     * Ensure saved weights and tokenizer exist from the training run.
     * Ensure `PROCESSED_DATA_DIR` in `evaluate_final_model.py` points to the combined data directory.
