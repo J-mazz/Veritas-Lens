@@ -100,12 +100,6 @@ This project involved significant debugging and iterative refinement:
 
 * **Training:** The model was trained for 10 epochs on the combined dataset using an NVIDIA A100 GPU.
 * **Best Validation Accuracy:** **82.15%** (Achieved at Epoch 8).
-* **Test Set Performance:** *(Evaluation pending availability of compute resources)*
-
-    * Test Loss: TBD
-    * Test Accuracy: TBD
-    * Classification Report: TBD
-    * Confusion Matrix: TBD
 
 ## Future Work & Deployment Considerations
 
