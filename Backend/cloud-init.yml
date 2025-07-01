@@ -1,0 +1,103 @@
+#cloud-config
+
+# Digital Ocean Cloud-Init configuration for Veritas-Lens Backend
+
+# Update system
+package_update: true
+package_upgrade: true
+
+# Install required packages
+packages:
+  - docker.io
+  - docker-compose
+  - nginx
+  - curl
+  - git
+  - htop
+  - ufw
+
+# Create nodejs user
+users:
+  - name: nodejs
+    shell: /bin/bash
+    sudo: false
+    home: /home/nodejs
+
+# Setup firewall
+runcmd:
+  # Enable firewall
+  - ufw --force enable
+  - ufw allow OpenSSH
+  - ufw allow 'Nginx Full'
+  - ufw allow 3000/tcp
+  
+  # Install Node.js 18.x
+  - curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+  - apt-get install -y nodejs
+  
+  # Start and enable services
+  - systemctl start docker
+  - systemctl enable docker
+  - systemctl start nginx
+  - systemctl enable nginx
+  
+  # Create application directory
+  - mkdir -p /opt/veritas-lens-backend
+  - chown nodejs:nodejs /opt/veritas-lens-backend
+  
+  # Create logs directory
+  - mkdir -p /var/log/veritas-lens
+  - chown nodejs:nodejs /var/log/veritas-lens
+  
+  # Setup log rotation
+  - |
+    cat > /etc/logrotate.d/veritas-lens << 'EOF'
+    /var/log/veritas-lens/*.log {
+        daily
+        missingok
+        rotate 52
+        compress
+        delaycompress
+        notifempty
+        create 644 nodejs nodejs
+        postrotate
+            systemctl reload veritas-lens
+        endscript
+    }
+    EOF
+
+# Write files
+write_files:
+  - path: /etc/nginx/sites-available/default
+    content: |
+      server {
+          listen 80 default_server;
+          listen [::]:80 default_server;
+          
+          server_name _;
+          
+          location / {
+              return 200 'Veritas-Lens Backend Server - Ready for deployment';
+              add_header Content-Type text/plain;
+          }
+          
+          location /health {
+              proxy_pass http://localhost:3000/health;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_set_header Host $host;
+              proxy_cache_bypass $http_upgrade;
+          }
+      }
+
+# Final commands
+final_message: |
+  Veritas-Lens Backend server setup complete!
+  
+  Next steps:
+  1. Deploy your application code
+  2. Configure environment variables
+  3. Start the application service
+  
+  Server is ready at: http://$(curl -s http://checkip.amazonaws.com/)

@@ -1,0 +1,57 @@
+# Use Node.js 20 on Ubuntu with CUDA support
+FROM nvidia/cuda:12.3-devel-ubuntu22.04
+
+# Set environment variables
+ENV NODE_VERSION=20.11.0
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    python3 \
+    python3-pip \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
+# Install Python ML dependencies
+RUN pip3 install torch torchvision torchaudio transformers datasets accelerate
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install Node.js dependencies
+RUN npm ci --only=production
+
+# Copy source code
+COPY . .
+
+# Build TypeScript
+RUN npm run build
+
+# Create non-root user
+RUN useradd -r -g root -u 1001 appuser && \
+    chown -R appuser:root /app && \
+    chmod -R g=u /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Start the application
+CMD ["npm", "start"]
